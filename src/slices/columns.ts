@@ -165,7 +165,6 @@ export const columnsSlice = createSlice({
   reducers: {
     resetColumns: () => initialState,
     updateColumnSequenceToLocalState: (state, { payload }) => {
-      console.log('updateColumnSequenceToLocalState columns =', state.columns);
       const columnIndex = findIndex(state.columns, { _id: payload._id });
       state.columns[columnIndex].sequence = payload.sequence;
       state.columns = state.columns.sort((a, b) => a.sequence - b.sequence);
