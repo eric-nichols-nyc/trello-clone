@@ -1,4 +1,4 @@
-import React, { useState, FC } from 'react';
+import React, { useState, useEffect, FC } from 'react';
 import { Box, useDisclosure } from '@chakra-ui/react';
 import AddColumnButton from '@/src/components/board/columns/buttons/add-column-button';
 import CardDetailsModal from '@/src/components/board/columns/modals/card-details-modal';
@@ -20,11 +20,19 @@ import { DragDropContext, Droppable } from 'react-beautiful-dnd';
 const BoardColumns: FC = (): JSX.Element => {
   const dispatch = useDispatch();
 
-  const columns = useAppSelector((state) => state.columns.columns);
+  const dbColumns = useAppSelector((state) => state.columns.columns);
   const cards = useAppSelector((state) => state.cards.cards);
 
   const { isOpen, onOpen, onClose } = useDisclosure();
   const [cardDetail, setCardDetail] = useState<CardDetail>({ _id: '', title: '', description: '' });
+  const [columns, setColumns] = useState(dbColumns)
+
+  useEffect(() => {
+    console.log('columns = ', columns)
+    const items = [...columns]
+    console.log('sorted = ', items.sort((a,b) => a.sequence - b.sequence))
+    setColumns(dbColumns)
+  }, [dbColumns])
 
   const showCardDetail = (cardId: string) => {
     const card = cards.filter((card) => card._id === cardId);
@@ -47,6 +55,7 @@ const BoardColumns: FC = (): JSX.Element => {
   };
 
   const onDragEnd = async (result) => {
+    console.log('onDragEnd...')
     const { destination, source, draggableId, type } = result;
 
     // Don't do anything where there is not destination
@@ -66,6 +75,7 @@ const BoardColumns: FC = (): JSX.Element => {
 
     // If column is being dragged
     if (type === 'column') {
+      console.log('type column...')
       await saveColumnSequence(destination.index, draggableId);
     }
   };
@@ -108,7 +118,50 @@ const BoardColumns: FC = (): JSX.Element => {
     }
   };
 
+  // const saveColumnSequence = async (destinationIndex: number, columnId: string) => {
+  //   console.log('saveColumnSeq...')
+  //   // Remove the column which is dragged from the list
+  //   const filteredColumns = columns.filter((column) => column._id !== columnId);
+  //   let targetColumn = columns.find((c) => c.id === columnId);
+
+  //   let sortedColumns = filteredColumns.sort((a, b) => a.sequence - b.sequence);
+  //   // set locally to avoid flickering
+  //   // let newSequence = destinationIndex === 0 ? 1 : sortedColumns[destinationIndex - 1].sequence + 1;
+  //   let sequence = destinationIndex === 0 ? 1 : sortedColumns[destinationIndex - 1].sequence + 1;
+  //   console.log('s ', sequence)
+  //   targetColumn = { ...targetColumn, sequence }
+  //   sortedColumns = [...sortedColumns, targetColumn].sort((a, b) => a.sequence - b.sequence)
+  //   setColumns(sortedColumns)
+
+  //   const patchColumn = {
+  //     _id: columnId,
+  //     sequence
+  //   };
+  //   // set locally to avoid flickering
+  //   console.log('patchColumn ', patchColumn)
+  //   // This is just for updating local state so that there won't be any lag after saving the sequence and fetching again
+  //   const test = await dispatch(updateColumnSequenceToLocalState(patchColumn));
+  //   console.log('test = ', test)
+  //   await dispatch(updateColumnSequence(patchColumn));
+
+  //   for (let i = destinationIndex; i < sortedColumns.length; i++) {
+  //     const column = sortedColumns[i];
+
+  //     sequence += 1;
+
+  //     const patchColumn = {
+  //       _id: column._id,
+  //       sequence
+  //     };
+
+  //     await dispatch(updateColumnSequenceToLocalState(patchColumn));
+  //     await dispatch(updateColumnSequence(patchColumn));
+  //   }
+  // };
+
+
   const saveColumnSequence = async (destinationIndex: number, columnId: string) => {
+    console.log('saveColumnSeq...')
     // Remove the column which is dragged from the list
     const filteredColumns = columns.filter((column) => column._id !== columnId);
 
@@ -120,9 +173,12 @@ const BoardColumns: FC = (): JSX.Element => {
       _id: columnId,
       sequence
     };
-
+    // set locally to avoid flickering
+    const newSequencedColumn = 
+    console.log('patchColumn ', patchColumn)
     // This is just for updating local state so that there won't be any lag after saving the sequence and fetching again
-    await dispatch(updateColumnSequenceToLocalState(patchColumn));
+    const test = await dispatch(updateColumnSequenceToLocalState(patchColumn));
+    console.log('test = ', test)
     await dispatch(updateColumnSequence(patchColumn));
 
     for (let i = destinationIndex; i < sortedColumns.length; i++) {
@@ -141,7 +197,7 @@ const BoardColumns: FC = (): JSX.Element => {
 
     // Added temporarily to refresh the page on column, otherwise it will not reflect the changes
     // Will be fixed later
-    window.location.reload();
+    // window.location.reload();
   };
 
   return (

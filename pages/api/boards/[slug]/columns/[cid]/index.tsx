@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { connectToDatabase } from '@/util/mongodb';
+import { ObjectId } from 'mongodb';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse): Promise<void> {
   const { cid } = req.query;
@@ -11,11 +12,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     switch (requestType) {
       case 'PATCH': {
-        const board = await db
+        const column = await db
           .collection('columns')
-          .updateOne({ _id: cid }, { $set: { ...req.body } });
+          .updateOne({ _id: cid }, { $set: req.body });
+          
+        console.log('patched column = ', column)
 
-        res.send(board);
+        res.json(column);
 
         break;
       }
